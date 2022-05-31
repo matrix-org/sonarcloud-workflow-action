@@ -48,48 +48,48 @@ inputs:
     description: The path to which to extract the artifact, defaults to the checkout root `.`
     default: '.'
 runs:
-  using:
-    steps:
-      - name: "🔍 Read PR details"
-        id: prdetails
-        if: inputs.pr_head_owner
-        uses: matrix-org/pr-details-action@v1
-        with:
-          owner: ${{ inputs.owner }}
-          branch: ${{ inputs.branch }}
+  using: composite
+  steps:
+    - name: "🔍 Read PR details"
+      id: prdetails
+      if: inputs.pr_head_owner
+      uses: matrix-org/pr-details-action@v1
+      with:
+        owner: ${{ inputs.owner }}
+        branch: ${{ inputs.branch }}
 
-      # Fetch base branch from the upstream repo so that Sonar can identify new code in PR builds
-      - name: "📕 Fetch base branch"
-        # workflow_call retains the github context of the caller, so `repository` will be upstream always due
-        # to it running on `workflow_run` which is called from the context of the target repo and not the fork.
-        if: steps.prdetails.outputs.base_branch
-        run: |
-          git remote add upstream https://github.com/${{ github.repository }}
-          git rev-parse HEAD
-          git fetch upstream ${{ steps.prdetails.outputs.base_branch }}:${{ steps.prdetails.outputs.base_branch }}
-          git status
-          git rev-parse HEAD
+    # Fetch base branch from the upstream repo so that Sonar can identify new code in PR builds
+    - name: "📕 Fetch base branch"
+      # workflow_call retains the github context of the caller, so `repository` will be upstream always due
+      # to it running on `workflow_run` which is called from the context of the target repo and not the fork.
+      if: steps.prdetails.outputs.base_branch
+      run: |
+        git remote add upstream https://github.com/${{ github.repository }}
+        git rev-parse HEAD
+        git fetch upstream ${{ steps.prdetails.outputs.base_branch }}:${{ steps.prdetails.outputs.base_branch }}
+        git status
+        git rev-parse HEAD
 
-      # There's a 'download artifact' action, but it hasn't been updated for the workflow_run action
-      # (https://github.com/actions/download-artifact/issues/60) so instead we get this alternative:
-      - name: "📥 Download Coverage Report"
-        uses: dawidd6/action-download-artifact@v2
-        if: inputs.coverage_workflow_name
-        with:
-          workflow: ${{ inputs.coverage_workflow_name }}
-          run_id: ${{ inputs.coverage_run_id }}
-          name: ${{ inputs.coverage_artifact_name }}
-          path: ${{ inputs.coverage_extract_path }}
+    # There's a 'download artifact' action, but it hasn't been updated for the workflow_run action
+    # (https://github.com/actions/download-artifact/issues/60) so instead we get this alternative:
+    - name: "📥 Download Coverage Report"
+      uses: dawidd6/action-download-artifact@v2
+      if: inputs.coverage_workflow_name
+      with:
+        workflow: ${{ inputs.coverage_workflow_name }}
+        run_id: ${{ inputs.coverage_run_id }}
+        name: ${{ inputs.coverage_artifact_name }}
+        path: ${{ inputs.coverage_extract_path }}
 
-      - name: "🩻 SonarCloud Scan"
-        uses: SonarSource/sonarcloud-github-action@master
-        with:
-          args: >
-            -Dsonar.projectVersion=${{ inputs.version }}
-            -Dsonar.scm.revision=${{ inputs.revision }}
-            -Dsonar.pullrequest.key=${{ steps.prdetails.outputs.pr_id }}
-            -Dsonar.pullrequest.branch=${{ steps.prdetails.outputs.pr_id && steps.prdetails.outputs.head_branch }}
-            -Dsonar.pullrequest.base=${{ steps.prdetails.outputs.pr_id && steps.prdetails.outputs.base_branch }}
-        env:
-          GITHUB_TOKEN: ${{ github.token }} # Needed to get PR information, if any
-          SONAR_TOKEN: ${{ inputs.token }}
+    - name: "🩻 SonarCloud Scan"
+      uses: SonarSource/sonarcloud-github-action@master
+      with:
+        args: >
+          -Dsonar.projectVersion=${{ inputs.version }}
+          -Dsonar.scm.revision=${{ inputs.revision }}
+          -Dsonar.pullrequest.key=${{ steps.prdetails.outputs.pr_id }}
+          -Dsonar.pullrequest.branch=${{ steps.prdetails.outputs.pr_id && steps.prdetails.outputs.head_branch }}
+          -Dsonar.pullrequest.base=${{ steps.prdetails.outputs.pr_id && steps.prdetails.outputs.base_branch }}
+      env:
+        GITHUB_TOKEN: ${{ github.token }} # Needed to get PR information, if any
+        SONAR_TOKEN: ${{ inputs.token }}
