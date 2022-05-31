@@ -57,7 +57,7 @@ runs:
   steps:
     - name: "🔍 Read PR details"
       id: prdetails
-      if: inputs.owner
+      if: inputs.is_pr
       uses: matrix-org/pr-details-action@v1.1
       with:
         owner: ${{ inputs.owner }}
