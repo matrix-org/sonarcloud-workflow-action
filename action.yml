@@ -1,0 +1,106 @@
+name: SonarCloud
+description: Helper action to analyse repo with SonarCloud, pass correct PR details and upload coverage.
+inputs:
+  pr_head_owner:
+    type: string
+    required: false
+    description: The owner (login) of the head repository of the pull request, must be specified for PRs
+
+  version:
+    type: string
+    required: true
+    description: The version to pass to Sonar as projectVersion
+
+  # We cannot use ${{ github.repository }} here as for fork pull requests it'll be the upstream repo
+  repo:
+    type: string
+    required: true
+    description: The full name of the repo in org/repo format
+  # We cannot use ${{ github.refName }} as in workflow runs it'll just be the default branch (develop)
+  head_branch:
+    type: string
+    required: true
+    description: The name of the head branch
+  # We cannot use ${{ github.sha }} here as for pull requests it'll be a simulated merge commit instead
+  revision:
+    type: string
+    required: true
+    description: The git revision with which this sonar run should be associated
+
+  token:
+    type: string
+    required: true
+    description: The SONAR_TOKEN passed from secrets.
+
+  # Coverage specific parameters, assumes coverage reports live in a /coverage/ directory
+  coverage_workflow_name:
+    type: string
+    required: false
+    description: The name of the workflow which uploaded the `coverage` artifact, if any
+  coverage_run_id:
+    type: string
+    required: false
+    description: The run_id of the workflow which upload the coverage relevant to this run
+  coverage_artifact_name:
+    type: string
+    required: false
+    description: The name of the coverage artifact
+    default: coverage
+  coverage_extract_path:
+    type: string
+    requires: false
+    description: The path to which to extract the artifact, defaults to the checkout root `.`
+    default: '.'
+runs:
+  using:
+    steps:
+      - name: "🔍 Read PR details"
+        id: prdetails
+        if: inputs.pr_head_owner
+        uses: matrix-org/pr-details-action@v1
+        with:
+          owner: ${{ inputs.owner }}
+          branch: ${{ inputs.head_branch }}
+
+      - name: "🧮 Checkout code"
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ inputs.repo }}
+          ref: ${{ inputs.head_branch }} # checkout commit that triggered this workflow
+          fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
+
+      # Fetch base branch from the upstream repo so that Sonar can identify new code in PR builds
+      - name: "📕 Fetch base branch"
+        # workflow_call retains the github context of the caller, so `repository` will be upstream always due
+        # to it running on `workflow_run` which is called from the context of the target repo and not the fork.
+        if: steps.prdetails.outputs.base_branch
+        run: |
+          git remote add upstream https://github.com/${{ github.repository }}
+          git rev-parse HEAD
+          git fetch upstream ${{ steps.prdetails.outputs.base_branch }}:${{ steps.prdetails.outputs.base_branch }}
+          git status
+          git rev-parse HEAD
+
+      # There's a 'download artifact' action, but it hasn't been updated for the workflow_run action
+      # (https://github.com/actions/download-artifact/issues/60) so instead we get this alternative:
+      - name: "📥 Download Coverage Report"
+        uses: dawidd6/action-download-artifact@v2
+        if: inputs.coverage_workflow_name
+        with:
+          workflow: ${{ inputs.coverage_workflow_name }}
+          run_id: ${{ inputs.coverage_run_id }}
+          name: ${{ inputs.coverage_artifact_name }}
+          path: ${{ inputs.coverage_extract_path }}
+
+      - name: "🩻 SonarCloud Scan"
+        uses: SonarSource/sonarcloud-github-action@master
+        with:
+          args: >
+            -Dsonar.projectVersion=${{ inputs.version }}
+            -Dsonar.scm.revision=${{ inputs.revision }}
+            -Dsonar.pullrequest.key=${{ steps.prdetails.outputs.pr_id }}
+            -Dsonar.pullrequest.branch=${{ steps.prdetails.outputs.pr_id && steps.prdetails.outputs.head_branch }}
+            -Dsonar.pullrequest.base=${{ steps.prdetails.outputs.pr_id && steps.prdetails.outputs.base_branch }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }} # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ inputs.token }}
