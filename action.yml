@@ -1,3 +1,4 @@
+# Before running this action you should have already checked out the code with fetch-depth:0
 name: SonarCloud
 description: Helper action to analyse repo with SonarCloud, pass correct PR details and upload coverage.
 inputs:
@@ -11,13 +12,8 @@ inputs:
     required: true
     description: The version to pass to Sonar as projectVersion
 
-  # We cannot use ${{ github.repository }} here as for fork pull requests it'll be the upstream repo
-  repo:
-    type: string
-    required: true
-    description: The full name of the repo in org/repo format
   # We cannot use ${{ github.refName }} as in workflow runs it'll just be the default branch (develop)
-  head_branch:
+  branch:
     type: string
     required: true
     description: The name of the head branch
@@ -60,14 +56,7 @@ runs:
         uses: matrix-org/pr-details-action@v1
         with:
           owner: ${{ inputs.owner }}
-          branch: ${{ inputs.head_branch }}
-
-      - name: "🧮 Checkout code"
-        uses: actions/checkout@v3
-        with:
-          repository: ${{ inputs.repo }}
-          ref: ${{ inputs.head_branch }} # checkout commit that triggered this workflow
-          fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
+          branch: ${{ inputs.branch }}
 
       # Fetch base branch from the upstream repo so that Sonar can identify new code in PR builds
       - name: "📕 Fetch base branch"
