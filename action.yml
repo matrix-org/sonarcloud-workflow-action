@@ -63,6 +63,7 @@ runs:
       # workflow_call retains the github context of the caller, so `repository` will be upstream always due
       # to it running on `workflow_run` which is called from the context of the target repo and not the fork.
       if: steps.prdetails.outputs.base_branch
+      shell: bash
       run: |
         git remote add upstream https://github.com/${{ github.repository }}
         git rev-parse HEAD
