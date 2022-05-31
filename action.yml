@@ -2,17 +2,22 @@
 name: SonarCloud
 description: Helper action to analyse repo with SonarCloud, pass correct PR details and upload coverage.
 inputs:
-  pr_head_owner:
+  is_pr:
     type: string
     required: false
-    description: The owner (login) of the head repository of the pull request, must be specified for PRs
+    description: Whether this workflow run related to a PR, if true then `owner` must be specified.
 
   version:
     type: string
     required: true
     description: The version to pass to Sonar as projectVersion
 
-  # We cannot use ${{ github.refName }} as in workflow runs it'll just be the default branch (develop)
+  # We cannot use ${{ github.repository_owner }} as in workflow runs it'll just be the upstream org
+  owner:
+    type: string
+    required: false
+    description: The owner (login) of the head repository of the pull request, must be specified for PRs
+  # We cannot use ${{ github.ref_name }} as in workflow runs it'll just be the default branch (develop)
   branch:
     type: string
     required: true
@@ -52,7 +57,7 @@ runs:
   steps:
     - name: "🔍 Read PR details"
       id: prdetails
-      if: inputs.pr_head_owner
+      if: inputs.owner
       uses: matrix-org/pr-details-action@v1.1
       with:
         owner: ${{ inputs.owner }}
