@@ -53,7 +53,7 @@ runs:
     - name: "🔍 Read PR details"
       id: prdetails
       if: inputs.pr_head_owner
-      uses: matrix-org/pr-details-action@v1
+      uses: matrix-org/pr-details-action@v1.1
       with:
         owner: ${{ inputs.owner }}
         branch: ${{ inputs.branch }}
