@@ -3,7 +3,7 @@ name: SonarCloud
 description: Helper action to analyse repo with SonarCloud, pass correct PR details and upload coverage.
 inputs:
   is_pr:
-    type: string
+    type: boolean
     required: false
     description: Whether this workflow run related to a PR, if true then `owner` must be specified.
 
