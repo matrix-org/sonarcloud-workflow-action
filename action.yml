@@ -49,14 +49,22 @@ inputs:
     default: coverage
   coverage_extract_path:
     type: string
-    requires: false
+    required: false
     description: The path to which to extract the artifact, defaults to the checkout root `.`
     default: '.'
+
+  skip_checkout:
+    type: boolean
+    required: false
+    description: Whether to skip the checkout step, sometimes some setup- action needs to run between checkout & analysis
+    default: false
 runs:
   using: composite
   steps:
     - name: "🧮 Checkout code"
       uses: actions/checkout@v3
+      # Inputs on composite actions are made of fail https://github.com/actions/runner/issues/1483
+      if: inputs.skip_checkout != 'true'
       with:
         repository: ${{ github.event.workflow_run.head_repository.full_name }}
         ref: ${{ inputs.branch }} # checkout commit that triggered this workflow
