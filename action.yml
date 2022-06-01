@@ -1,4 +1,3 @@
-# Before running this action you should have already checked out the code with fetch-depth:0
 name: SonarCloud
 description: Helper action to analyse repo with SonarCloud, pass correct PR details and upload coverage.
 inputs:
