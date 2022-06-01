@@ -7,16 +7,16 @@ inputs:
     required: false
     description: Whether this workflow run related to a PR, if true then `owner` must be specified.
 
-  version:
+  version_cmd:
     type: string
     required: true
-    description: The version to pass to Sonar as projectVersion
+    description: The shell command to find the version to pass to Sonar as projectVersion
 
-  # We cannot use ${{ github.repository_owner }} as in workflow runs it'll just be the upstream org
-  owner:
+  # We cannot use ${{ github.repository }} as in workflow runs from forks it'll be the upstream org
+  repository:
     type: string
-    required: false
-    description: The owner (login) of the head repository of the pull request, must be specified for PRs
+    required: true
+    description: The full name of the head repo in org/repo format
   # We cannot use ${{ github.ref_name }} as in workflow runs it'll just be the default branch (develop)
   branch:
     type: string
@@ -55,14 +55,37 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: "🧮 Checkout code"
+      uses: actions/checkout@v3
+      with:
+        repository: ${{ github.event.workflow_run.head_repository.full_name }}
+        ref: ${{ inputs.branch }} # checkout commit that triggered this workflow
+        fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
+
+    - name: "🔪 Extract owner from repository"
+      id: owner
+      # Inputs on composite actions are made of fail https://github.com/actions/runner/issues/1483
+      if: inputs.is_pr == 'true'
+      shell: bash
+      run: |
+        owner=$(echo "${{ inputs.repository }}" | cut -d'/' -f1)
+        echo "::set-output name=owner::$owner"
+
     - name: "🔍 Read PR details"
       id: prdetails
       # Inputs on composite actions are made of fail https://github.com/actions/runner/issues/1483
       if: inputs.is_pr == 'true'
       uses: matrix-org/pr-details-action@v1.1
       with:
-        owner: ${{ inputs.owner }}
+        owner: ${{ steps.owner.outputs.owner }}
         branch: ${{ inputs.branch }}
+
+    - name: "🔍 Read project version"
+      id: version
+      shell: bash
+      run: |
+        version=$(${{ inputs.version_cmd }})
+        echo "::set-output name=version::$version"
 
     # Fetch base branch from the upstream repo so that Sonar can identify new code in PR builds
     - name: "📕 Fetch base branch"
@@ -92,7 +115,7 @@ runs:
       uses: SonarSource/sonarcloud-github-action@master
       with:
         args: >
-          -Dsonar.projectVersion=${{ inputs.version }}
+          -Dsonar.projectVersion=${{ steps.version.output.version }}
           -Dsonar.scm.revision=${{ inputs.revision }}
           -Dsonar.pullrequest.key=${{ steps.prdetails.outputs.pr_id }}
           -Dsonar.pullrequest.branch=${{ steps.prdetails.outputs.pr_id && steps.prdetails.outputs.head_branch }}
