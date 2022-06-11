@@ -122,7 +122,7 @@ runs:
       uses: SonarSource/sonarcloud-github-action@master
       with:
         args: >
-          -Dsonar.projectVersion=${{ steps.version.output.version }}
+          -Dsonar.projectVersion=${{ steps.version.outputs.version }}
           -Dsonar.scm.revision=${{ inputs.revision }}
           -Dsonar.pullrequest.key=${{ steps.prdetails.outputs.pr_id }}
           -Dsonar.pullrequest.branch=${{ steps.prdetails.outputs.pr_id && steps.prdetails.outputs.head_branch }}
