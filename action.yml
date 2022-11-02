@@ -57,6 +57,11 @@ inputs:
     required: false
     description: Whether to skip the checkout step, sometimes some setup- action needs to run between checkout & analysis
     default: false
+
+  extra_args:
+    type: string
+    requires: false
+    description: Additional args to pass to SonarSource/sonarcloud-github-action as `args`
 runs:
   using: composite
   steps:
@@ -127,6 +132,7 @@ runs:
           -Dsonar.pullrequest.key=${{ steps.prdetails.outputs.pr_id }}
           -Dsonar.pullrequest.branch=${{ steps.prdetails.outputs.pr_id && steps.prdetails.outputs.head_branch }}
           -Dsonar.pullrequest.base=${{ steps.prdetails.outputs.pr_id && steps.prdetails.outputs.base_branch }}
+          ${{ inputs.extra_args }}
       env:
         GITHUB_TOKEN: ${{ github.token }} # Needed to get PR information, if any
         SONAR_TOKEN: ${{ inputs.token }}
