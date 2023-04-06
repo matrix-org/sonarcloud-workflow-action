@@ -87,7 +87,7 @@ runs:
       id: prdetails
       # Inputs on composite actions are made of fail https://github.com/actions/runner/issues/1483
       if: inputs.is_pr == 'true'
-      uses: matrix-org/pr-details-action@v1.2
+      uses: matrix-org/pr-details-action@v1.3
       with:
         owner: ${{ steps.owner.outputs.owner }}
         branch: ${{ inputs.branch }}
