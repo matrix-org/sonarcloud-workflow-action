@@ -81,7 +81,7 @@ runs:
       shell: bash
       run: |
         owner=$(echo "${{ inputs.repository }}" | cut -d'/' -f1)
-        echo "::set-output name=owner::$owner"
+        echo "owner=$owner" >> $GITHUB_OUTPUT
 
     - name: "🔍 Read PR details"
       id: prdetails
@@ -97,7 +97,7 @@ runs:
       shell: bash
       run: |
         version=$(${{ inputs.version_cmd }})
-        echo "::set-output name=version::$version"
+        echo "version=$version" >> $GITHUB_OUTPUT
 
     # Fetch base branch from the upstream repo so that Sonar can identify new code in PR builds
     - name: "📕 Fetch base branch"
