@@ -124,7 +124,7 @@ runs:
         path: ${{ inputs.coverage_extract_path }}
 
     - name: "🩻 SonarCloud Scan"
-      uses: SonarSource/sonarcloud-github-action@master
+      uses: SonarSource/sonarcloud-github-action@v1.8
       with:
         args: >
           -Dsonar.projectVersion=${{ steps.version.outputs.version }}
