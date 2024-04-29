@@ -91,8 +91,8 @@ runs:
       id: version
       shell: bash
       run: |
-        version=$(${{ inputs.version_cmd }})
-        echo "sonar.projectVersion=$version" >> sonar-project.properties
+        version=$(${{ inputs.version_cmd }} | tr -d '\r\n')
+        echo "sonar.projectVersion=${version//$'\n'/\\n}" >> sonar-project.properties
 
     # Fetch base branch from the upstream repo so that Sonar can identify new code in PR builds
     - name: "📕 Fetch base branch"
