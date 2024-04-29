@@ -119,6 +119,7 @@ runs:
         path: ${{ inputs.coverage_extract_path }}
 
     - name: "🔧 Load configuration"
+      shell: bash
       run: |
         echo "sonar.scm.revision=$REVISION" >> sonar-project.properties
         echo "sonar.pullrequest.key=$PR_ID" >> sonar-project.properties
