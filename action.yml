@@ -4,7 +4,7 @@ inputs:
   is_pr:
     type: boolean
     required: false
-    description: Whether this workflow run related to a PR, if true then `owner` must be specified.
+    description: Whether this workflow run related to a PR, if true then `repository` must be specified.
 
   version_cmd:
     type: string
