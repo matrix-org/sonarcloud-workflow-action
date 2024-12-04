@@ -33,14 +33,10 @@ inputs:
     description: The SONAR_TOKEN passed from secrets.
 
   # Coverage specific parameters, assumes coverage reports live in a /coverage/ directory
-  coverage_workflow_name:
-    type: string
-    required: false
-    description: The name of the workflow which uploaded the `coverage` artifact, if any
   coverage_run_id:
     type: string
     required: false
-    description: The run_id of the workflow which upload the coverage relevant to this run
+    description: The run_id of the workflow which upload the coverage relevant to this run, if any
   coverage_artifact_name:
     type: string
     required: false
@@ -107,16 +103,14 @@ runs:
         git status
         git rev-parse HEAD
 
-    # There's a 'download artifact' action, but it hasn't been updated for the workflow_run action
-    # (https://github.com/actions/download-artifact/issues/60) so instead we get this alternative:
     - name: "📥 Download Coverage Report"
-      uses: dawidd6/action-download-artifact@v3
-      if: inputs.coverage_workflow_name
+      uses: actions/download-artifact@v4
+      if: inputs.coverage_run_id
       with:
-        workflow: ${{ inputs.coverage_workflow_name }}
-        run_id: ${{ inputs.coverage_run_id }}
-        name: ${{ inputs.coverage_artifact_name }}
-        path: ${{ inputs.coverage_extract_path }}
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.coverage_run_id }}
+          name: ${{ inputs.coverage_artifact_name }}
+          path: ${{ inputs.coverage_extract_path }}
 
     - name: "🔧 Load configuration"
       shell: bash
