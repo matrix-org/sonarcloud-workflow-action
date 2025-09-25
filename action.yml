@@ -126,7 +126,7 @@ runs:
           BASE_BRANCH: ${{ steps.prdetails.outputs.pr_id && steps.prdetails.outputs.base_branch }}
 
     - name: "🩻 SonarCloud Scan"
-      uses: SonarSource/sonarqube-scan-action@1a6d90ebcb0e6a6b1d87e37ba693fe453195ae25 # v5
+      uses: SonarSource/sonarqube-scan-action@2f77a1ec69fb1d595b06f35ab27e97605bdef703 # v5
       env:
         GITHUB_TOKEN: ${{ github.token }} # Needed to get PR information, if any
         SONAR_TOKEN: ${{ inputs.token }}
