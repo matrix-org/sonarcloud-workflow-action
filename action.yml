@@ -5,10 +5,10 @@ inputs:
     type: boolean
     required: false
     description: Whether this workflow run related to a PR, if true then `repository` must be specified.
-  skip_label:
+  skip_coverage_label:
     type: string
     required: false
-    description: A label to check the pull request for, if present will skip this action. Only valid with is_pr=true.
+    description: A label to check the pull request for, if present will exclude all files from coverage. Only valid with is_pr=true.
 
   version_cmd:
     type: string
@@ -130,7 +130,7 @@ runs:
           BASE_BRANCH: ${{ steps.prdetails.outputs.pr_id && steps.prdetails.outputs.base_branch }}
 
     - name: "🏷️ Check label"
-      if: inputs.skip_label && contains(inputs.skip_label, fromJSON(steps.prdetails.outputs.data).labels.*.name)
+      if: inputs.skip_coverage_label && contains(inputs.skip_coverage_label, fromJSON(steps.prdetails.outputs.data).labels.*.name)
       run: |
         echo "sonar.coverage.exclusions=**/*" >> sonar-project.properties
 
