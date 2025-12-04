@@ -131,7 +131,7 @@ runs:
 
     - name: "🏷️ Check label"
       shell: bash
-      if: inputs.skip_coverage_label && contains(inputs.skip_coverage_label, fromJSON(steps.prdetails.outputs.data).labels.*.name)
+      if: inputs.skip_coverage_label && contains(fromJSON(steps.prdetails.outputs.data).labels.*.name, inputs.skip_coverage_label)
       run: |
         echo "sonar.coverage.exclusions=**/*" >> sonar-project.properties
 
