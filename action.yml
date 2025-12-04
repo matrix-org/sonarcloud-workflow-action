@@ -130,6 +130,7 @@ runs:
           BASE_BRANCH: ${{ steps.prdetails.outputs.pr_id && steps.prdetails.outputs.base_branch }}
 
     - name: "🏷️ Check label"
+      shell: bash
       if: inputs.skip_coverage_label && contains(inputs.skip_coverage_label, fromJSON(steps.prdetails.outputs.data).labels.*.name)
       run: |
         echo "sonar.coverage.exclusions=**/*" >> sonar-project.properties
