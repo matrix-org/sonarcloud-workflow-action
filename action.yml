@@ -5,6 +5,10 @@ inputs:
     type: boolean
     required: false
     description: Whether this workflow run related to a PR, if true then `repository` must be specified.
+  skip_coverage_label:
+    type: string
+    required: false
+    description: A label to check the pull request for, if present will exclude all files from coverage. Only valid with is_pr=true.
 
   version_cmd:
     type: string
@@ -124,6 +128,12 @@ runs:
           PR_ID: ${{ steps.prdetails.outputs.pr_id }}
           HEAD_BRANCH: ${{ steps.prdetails.outputs.pr_id && steps.prdetails.outputs.head_branch }}
           BASE_BRANCH: ${{ steps.prdetails.outputs.pr_id && steps.prdetails.outputs.base_branch }}
+
+    - name: "🏷️ Check label"
+      shell: bash
+      if: inputs.skip_coverage_label && contains(fromJSON(steps.prdetails.outputs.data).labels.*.name, inputs.skip_coverage_label)
+      run: |
+        echo "sonar.coverage.exclusions=**/*" >> sonar-project.properties
 
     - name: "🩻 SonarCloud Scan"
       uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602 # v6
