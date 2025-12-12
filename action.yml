@@ -108,7 +108,7 @@ runs:
         git rev-parse HEAD
 
     - name: "📥 Download Coverage Report"
-      uses: actions/download-artifact@v6
+      uses: actions/download-artifact@v7
       if: inputs.coverage_run_id
       with:
           github-token: ${{ github.token }}
