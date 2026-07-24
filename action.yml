@@ -50,7 +50,7 @@ inputs:
     type: string
     required: false
     description: The path to which to extract the artifact, defaults to the checkout root `.`
-    default: '.'
+    default: "."
 
   skip_checkout:
     type: boolean
@@ -68,6 +68,7 @@ runs:
         repository: ${{ github.event.workflow_run.head_repository.full_name }}
         ref: ${{ inputs.branch }} # checkout commit that triggered this workflow
         fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
+        persist-credentials: false
 
     - name: "🔪 Extract owner from repository"
       id: owner
@@ -75,14 +76,16 @@ runs:
       if: inputs.is_pr == 'true'
       shell: bash
       run: |
-        owner=$(echo "${{ inputs.repository }}" | cut -d'/' -f1)
+        owner=$(echo "$REPOSITORY" | cut -d'/' -f1)
         echo "owner=$owner" >> $GITHUB_OUTPUT
+      env:
+        REPOSITORY: ${{ inputs.repository }}
 
     - name: "🔍 Read PR details"
       id: prdetails
       # Inputs on composite actions are made of fail https://github.com/actions/runner/issues/1483
       if: inputs.is_pr == 'true'
-      uses: matrix-org/pr-details-action@v1.3
+      uses: matrix-org/pr-details-action@15bde5285d7850ba276cc3bd8a03733e3f24622a # v1.3
       with:
         owner: ${{ steps.owner.outputs.owner }}
         branch: ${{ inputs.branch }}
@@ -91,9 +94,10 @@ runs:
       id: version
       shell: bash
       run: |
-        version=$(${{ inputs.version_cmd }} | tr -d '\r\n')
+        version=$($VERSION | tr -d '\r\n')
         echo "sonar.projectVersion=${version//$'\n'/\\n}" >> sonar-project.properties
-
+      env:
+        VERSION: ${{ inputs.version_cmd }}
     # Fetch base branch from the upstream repo so that Sonar can identify new code in PR builds
     - name: "📕 Fetch base branch"
       # workflow_call retains the github context of the caller, so `repository` will be upstream always due
@@ -103,18 +107,20 @@ runs:
       run: |
         git remote add upstream https://github.com/${{ github.repository }}
         git rev-parse HEAD
-        git fetch upstream ${{ steps.prdetails.outputs.base_branch }}:${{ steps.prdetails.outputs.base_branch }}
+        git fetch upstream $BASE_BRANCH:$BASE_BRANCH
         git status
         git rev-parse HEAD
+      env:
+        BASE_BRANCH: ${{ steps.prdetails.outputs.base_branch }}
 
     - name: "📥 Download Coverage Report"
-      uses: actions/download-artifact@v8
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
       if: inputs.coverage_run_id
       with:
-          github-token: ${{ github.token }}
-          run-id: ${{ inputs.coverage_run_id }}
-          name: ${{ inputs.coverage_artifact_name }}
-          path: ${{ inputs.coverage_extract_path }}
+        github-token: ${{ github.token }}
+        run-id: ${{ inputs.coverage_run_id }}
+        name: ${{ inputs.coverage_artifact_name }}
+        path: ${{ inputs.coverage_extract_path }}
 
     - name: "🔧 Load configuration"
       shell: bash
@@ -124,10 +130,10 @@ runs:
         echo "sonar.pullrequest.branch=$HEAD_BRANCH" >> sonar-project.properties
         echo "sonar.pullrequest.base=$BASE_BRANCH" >> sonar-project.properties
       env:
-          REVISION: ${{ inputs.revision }}
-          PR_ID: ${{ steps.prdetails.outputs.pr_id }}
-          HEAD_BRANCH: ${{ steps.prdetails.outputs.pr_id && steps.prdetails.outputs.head_branch }}
-          BASE_BRANCH: ${{ steps.prdetails.outputs.pr_id && steps.prdetails.outputs.base_branch }}
+        REVISION: ${{ inputs.revision }}
+        PR_ID: ${{ steps.prdetails.outputs.pr_id }}
+        HEAD_BRANCH: ${{ steps.prdetails.outputs.pr_id && steps.prdetails.outputs.head_branch }}
+        BASE_BRANCH: ${{ steps.prdetails.outputs.pr_id && steps.prdetails.outputs.base_branch }}
 
     - name: "🏷️ Check label"
       shell: bash
