@@ -61,7 +61,7 @@ runs:
   using: composite
   steps:
     - name: "🧮 Checkout code"
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       # Inputs on composite actions are made of fail https://github.com/actions/runner/issues/1483
       if: inputs.skip_checkout != 'true'
       with:
